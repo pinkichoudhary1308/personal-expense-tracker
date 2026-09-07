@@ -5,7 +5,6 @@ import {
     Pie,
     Cell,
     Tooltip,
-    Legend,
     ResponsiveContainer
 } from "recharts";
 
@@ -20,6 +19,7 @@ const COLORS = {
 
 function Dashboard() {
     const { user } = useAuth();
+
     const [summary, setSummary] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -27,7 +27,6 @@ function Dashboard() {
 
     useEffect(() => {
         const loadDashboard = async () => {
-
             try {
                 const [summaryResponse, transactionsResponse] =
                     await Promise.all([
@@ -37,28 +36,41 @@ function Dashboard() {
                         )
                     ]);
 
-                setSummary(summaryResponse.data);
-                setTransactions(
-                    transactionsResponse.data.transactions
-                );
+                // Summary data
+                setSummary(summaryResponse.data || null);
 
-            } catch (error) {
-                console.error(error);
-                setError(
-                    "Unable to load dashboard data."
-                );
+                // Transactions data
+                const data = transactionsResponse.data;
+
+                if (Array.isArray(data)) {
+                    setTransactions(data);
+                } else if (Array.isArray(data?.transactions)) {
+                    setTransactions(data.transactions);
+                } else if (Array.isArray(data?.content)) {
+                    setTransactions(data.content);
+                } else {
+                    setTransactions([]);
+                }
+            } catch (err) {
+                console.error("Dashboard loading error:", err);
+
+                setError("Unable to load dashboard data.");
+                setTransactions([]);
+                setSummary(null);
             } finally {
                 setLoading(false);
             }
         };
-        loadDashboard();
 
+        loadDashboard();
     }, []);
 
+    // Loading screen
     if (loading) {
         return (
             <>
                 <Navbar />
+
                 <div className="dashboard-loading">
                     Loading dashboard...
                 </div>
@@ -66,80 +78,106 @@ function Dashboard() {
         );
     }
 
-    const chartData = summary
-        ? [
-            {
-                name: "Income",
-                value: Number(summary.totalIncome)
-            },
-            {
-                name: "Expense",
-                value: Number(summary.totalExpense)
-            }
-        ]
-        : [];
+    // Chart data
+    const chartData = [
+        {
+            name: "Income",
+            value: Number(summary?.totalIncome || 0)
+        },
+        {
+            name: "Expense",
+            value: Number(summary?.totalExpense || 0)
+        }
+    ];
 
     return (
         <div>
             <Navbar />
+
             <main className="dashboard-container">
+
+                {/* Dashboard Header */}
                 <div className="dashboard-header">
                     <div>
                         <h1>
-                            Welcome, {user?.name}
+                            Welcome, {user?.name || "User"}
                         </h1>
+
                         <p>
                             Here's your financial overview
                         </p>
                     </div>
                 </div>
 
+                {/* Error Message */}
                 {error && (
                     <div className="error-message">
                         {error}
                     </div>
                 )}
 
+                {/* Summary Cards */}
                 {summary && (
                     <div className="summary-grid">
+
                         <div className="summary-card">
                             <p>Total Balance</p>
+
                             <h2>
-                                ₹{Number(summary.balance).toFixed(2)}
+                                ₹
+                                {Number(
+                                    summary.balance || 0
+                                ).toFixed(2)}
                             </h2>
                         </div>
 
                         <div className="summary-card">
                             <p>Total Income</p>
+
                             <h2>
-                                ₹{Number(summary.totalIncome).toFixed(2)}
+                                ₹
+                                {Number(
+                                    summary.totalIncome || 0
+                                ).toFixed(2)}
                             </h2>
                         </div>
 
                         <div className="summary-card">
                             <p>Total Expense</p>
+
                             <h2>
-                                ₹{Number(summary.totalExpense).toFixed(2)}
+                                ₹
+                                {Number(
+                                    summary.totalExpense || 0
+                                ).toFixed(2)}
                             </h2>
                         </div>
+
                     </div>
                 )}
 
+                {/* Dashboard Grid */}
                 <div className="dashboard-grid">
+
+                    {/* Income vs Expense Card */}
                     <div className="dashboard-card">
+
                         <h2>
                             Income vs Expense
                         </h2>
+
                         <div className="chart-container">
 
                             <div className="expense-chart">
 
                                 <div className="chart-wrapper">
+
                                     <ResponsiveContainer
                                         width="100%"
                                         height="100%"
                                     >
                                         <PieChart>
+
                                             <Pie
                                                 data={chartData}
                                                 dataKey="value"
@@ -152,19 +190,29 @@ function Dashboard() {
                                                     (entry, index) => (
                                                         <Cell
                                                             key={`cell-${index}`}
-                                                            fill={COLORS[entry.name]}
+                                                            fill={
+                                                                COLORS[
+                                                                    entry.name
+                                                                ]
+                                                            }
                                                         />
                                                     )
                                                 )}
                                             </Pie>
+
                                             <Tooltip />
+
                                         </PieChart>
                                     </ResponsiveContainer>
+
                                 </div>
 
+                                {/* Chart Legend */}
                                 <div className="chart-legend">
+
                                     <div className="legend-item">
                                         <span className="legend-color expense-color"></span>
+
                                         <span>
                                             Expense
                                         </span>
@@ -172,16 +220,23 @@ function Dashboard() {
 
                                     <div className="legend-item">
                                         <span className="legend-color income-color"></span>
+
                                         <span>
                                             Income
                                         </span>
                                     </div>
+
                                 </div>
+
                             </div>
+
                         </div>
+
                     </div>
 
+                    {/* Recent Transactions Card */}
                     <div className="dashboard-card">
+
                         <div className="card-header">
                             <h2>
                                 Recent Transactions
@@ -189,25 +244,33 @@ function Dashboard() {
                         </div>
 
                         {transactions.length === 0 ? (
+
                             <p className="empty-message">
                                 No transactions found.
                             </p>
+
                         ) : (
+
                             <div className="recent-list">
+
                                 {transactions.map(
                                     (transaction) => (
+
                                         <div
                                             className="recent-item"
                                             key={transaction.id}
                                         >
+
                                             <div>
                                                 <strong>
                                                     {transaction.category}
                                                 </strong>
+
                                                 <p>
                                                     {transaction.description ||
                                                         "No description"}
                                                 </p>
+
                                                 <small>
                                                     {transaction.transactionDate}
                                                 </small>
@@ -215,26 +278,35 @@ function Dashboard() {
 
                                             <span
                                                 className={
-                                                    transaction.type === "INCOME"
+                                                    transaction.type ===
+                                                    "INCOME"
                                                         ? "income-text"
                                                         : "expense-text"
                                                 }
                                             >
-                                                {transaction.type === "INCOME"
+                                                {transaction.type ===
+                                                "INCOME"
                                                     ? "+"
-                                                    : "-"
-                                                }
-                                                ₹{Number(
-                                                    transaction.amount
+                                                    : "-"}
+
+                                                ₹
+                                                {Number(
+                                                    transaction.amount || 0
                                                 ).toFixed(2)}
                                             </span>
+
                                         </div>
                                     )
                                 )}
+
                             </div>
+
                         )}
+
                     </div>
+
                 </div>
+
             </main>
         </div>
     );
