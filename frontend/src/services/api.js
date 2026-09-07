@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api`,
+    baseURL: "https://personal-expense-tracker-r3um.onrender.com/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -25,9 +25,7 @@ api.interceptors.request.use(
 
 // Handle authentication errors
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     (error) => {
         const status = error.response?.status;
         const requestUrl = error.config?.url || "";
@@ -36,10 +34,7 @@ api.interceptors.response.use(
             requestUrl.includes("/auth/login") ||
             requestUrl.includes("/auth/register");
 
-        if (
-            !isAuthRequest &&
-            (status === 401 || status === 403)
-        ) {
+        if (!isAuthRequest && (status === 401 || status === 403)) {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
 
