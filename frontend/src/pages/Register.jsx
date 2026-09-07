@@ -5,17 +5,20 @@ import api from "../services/api";
 
 function Register() {
     const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
     });
+
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
         setFormData((previous) => ({
             ...previous,
             [name]: value,
@@ -24,6 +27,7 @@ function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         setError("");
         setSuccess("");
         setLoading(true);
@@ -33,10 +37,12 @@ function Register() {
                 "/auth/register",
                 formData
             );
+
             setSuccess(
-                response.data.message ||
+                response.data?.message ||
                 "Registration successful!"
             );
+
             setFormData({
                 name: "",
                 email: "",
@@ -49,20 +55,30 @@ function Register() {
 
         } catch (error) {
             if (error.response?.data?.error) {
-                setError(
-                    error.response.data.error
-                );
+                setError(error.response.data.error);
+
             } else if (error.response?.data) {
-                setError(
-                    Object.values(
-                        error.response.data
-                    ).join(", ")
-                );
+                const responseData = error.response.data;
+
+                if (
+                    typeof responseData === "object"
+                ) {
+                    setError(
+                        Object.values(responseData)
+                            .join(", ")
+                    );
+                } else {
+                    setError(
+                        String(responseData)
+                    );
+                }
+
             } else {
                 setError(
-                    "Unable to connect to server."
+                    "Unable to connect to server. Please try again."
                 );
             }
+
         } finally {
             setLoading(false);
         }
@@ -71,7 +87,9 @@ function Register() {
     return (
         <div className="auth-container">
             <div className="auth-card">
+
                 <h1>Create Account</h1>
+
                 <p className="auth-subtitle">
                     Create your Personal Expense Tracker account
                 </p>
@@ -89,10 +107,12 @@ function Register() {
                 )}
 
                 <form onSubmit={handleSubmit}>
+
                     <div className="form-group">
                         <label htmlFor="name">
                             Name
                         </label>
+
                         <input
                             id="name"
                             type="text"
@@ -108,6 +128,7 @@ function Register() {
                         <label htmlFor="email">
                             Email
                         </label>
+
                         <input
                             id="email"
                             type="email"
@@ -123,6 +144,7 @@ function Register() {
                         <label htmlFor="password">
                             Password
                         </label>
+
                         <input
                             id="password"
                             type="password"
@@ -141,17 +163,19 @@ function Register() {
                     >
                         {loading
                             ? "Creating Account..."
-                            : "Register"
-                        }
+                            : "Register"}
                     </button>
+
                 </form>
 
                 <p className="auth-link">
                     Already have an account?{" "}
+
                     <Link to="/login">
                         Login
                     </Link>
                 </p>
+
             </div>
         </div>
     );

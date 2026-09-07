@@ -1,19 +1,19 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:8080/api",
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
+// Add JWT token to every request
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("token");
 
         if (token) {
-            config.headers.Authorization =
-                `Bearer ${token}`;
+            config.headers.Authorization = `Bearer ${token}`;
         }
 
         return config;
@@ -23,14 +23,14 @@ api.interceptors.request.use(
     }
 );
 
+// Handle authentication errors
 api.interceptors.response.use(
-    (response) => response,
-
+    (response) => {
+        return response;
+    },
     (error) => {
         const status = error.response?.status;
-
-        const requestUrl =
-            error.config?.url || "";
+        const requestUrl = error.config?.url || "";
 
         const isAuthRequest =
             requestUrl.includes("/auth/login") ||
@@ -42,6 +42,7 @@ api.interceptors.response.use(
         ) {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
+
             window.location.href = "/login";
         }
 
